@@ -23,11 +23,13 @@
             border-radius: 6px;
             cursor: pointer;
             margin-top: 20px;
+            width: 100%;
+            max-width: 300px;
         }
         #form {
             display: none;
         }
-        #form input {
+        input {
             display: block;
             width: 100%;
             margin: 10px 0;
@@ -52,13 +54,14 @@
         <button id="buy" type="button">Купить</button>
     </div>
 
-    <form id="form">
+    <!-- Используем обычный div вместо form -->
+    <div id="form">
         <input type="text" placeholder="Имя" id="user_name">
         <input type="email" placeholder="Email" id="user_email">
         <input type="tel" placeholder="Телефон" id="user_phone">
         <div id="error"></div>
         <button id="order" type="button">Оформить</button>
-    </form>
+    </div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
@@ -66,9 +69,13 @@
         tg.ready();
         tg.expand();
 
+        const main = document.getElementById("main");
+        const form = document.getElementById("form");
+        const errorEl = document.getElementById("error");
+
         document.getElementById("buy").addEventListener("click", () => {
-            document.getElementById("main").style.display = "none";
-            document.getElementById("form").style.display = "block";
+            main.style.display = "none";
+            form.style.display = "block";
 
             const user = tg.initDataUnsafe?.user;
             if (user) {
@@ -77,8 +84,9 @@
             }
         });
 
-        document.getElementById("order").addEventListener("click", () => {
-            const errorEl = document.getElementById("error");
+        document.getElementById("order").addEventListener("click", function(e) {
+            e.preventDefault(); // на всякий случай
+
             errorEl.innerText = "";
 
             const name = document.getElementById("user_name").value.trim();
@@ -98,8 +106,13 @@
                 return;
             }
 
-            // Всё хорошо — отправляем данные
-            tg.sendData(JSON.stringify({ name, email, phone }));
+            // Отправляем данные боту
+            tg.sendData(JSON.stringify({
+                name: name,
+                email: email,
+                phone: phone
+            }));
+
             tg.close();
         });
     </script>
