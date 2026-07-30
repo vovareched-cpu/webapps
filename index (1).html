@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Простая страница</title>
+    <title>Заказ</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,21 +11,8 @@
             margin: 40px auto;
             padding: 20px;
             text-align: center;
-            background-color: var(--tg-theme-bg-color);
-        }
-        h1 {
-            color: var(--tg-theme-text-color);
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        p {
-            color: #555;
-            line-height: 1.6;
-            font-size: 18px;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
         }
         button {
             background-color: #007bff;
@@ -37,9 +24,6 @@
             cursor: pointer;
             margin-top: 20px;
         }
-        button:hover {
-            background-color: #0056b3;
-        }
         #form {
             display: none;
         }
@@ -47,66 +31,77 @@
             display: block;
             width: 100%;
             margin: 10px 0;
-            padding: 10px;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
             box-sizing: border-box;
+        }
+        #error {
+            color: #e74c3c;
+            margin: 15px 0;
+            min-height: 24px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div id="main">
         <h1>Добро пожаловать!</h1>
-        <img src="https://via.placeholder.com/400x250/007bff/ffffff?text=Изображение" alt="Пример изображения">
-        <p>Это простой HTML-файл с базовой разметкой. Здесь есть заголовок, изображение, текст и кнопка.</p>
-        <button id="buy">Купить</button>
+        <p>Нажмите кнопку, чтобы оформить заказ</p>
+        <button id="buy" type="button">Купить</button>
     </div>
+
     <form id="form">
         <input type="text" placeholder="Имя" id="user_name">
-        <input type="text" placeholder="Email" id="user_email">
-        <input type="text" placeholder="Телефон" id="user_phone">
+        <input type="email" placeholder="Email" id="user_email">
+        <input type="tel" placeholder="Телефон" id="user_phone">
         <div id="error"></div>
-        <button id="order">Оформить</button>
+        <button id="order" type="button">Оформить</button>
     </form>
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        let tg = window.Telegram.WebApp;
-        let buy = document.getElementById("buy");
-        let order = document.getElementById("order");
+        const tg = window.Telegram.WebApp;
+        tg.ready();
         tg.expand();
 
-        buy.addEventListener("click", () => {
+        document.getElementById("buy").addEventListener("click", () => {
             document.getElementById("main").style.display = "none";
             document.getElementById("form").style.display = "block";
-            document.getElementById("user_name").value = tg.initDataUnsafe.user?.first_name + " " + tg.initDataUnsafe.user?.last_name
+
+            const user = tg.initDataUnsafe?.user;
+            if (user) {
+                document.getElementById("user_name").value =
+                    (user.first_name || "") + " " + (user.last_name || "");
+            }
         });
 
-        order.addEventListener("click", () => {
-            document.getElementById("error").innerText = '';
-            let name = document.getElementById("user_name").value;
-            let email = document.getElementById("user_email").value;
-            let phone = document.getElementById("user_phone").value;
-            if(name.length < 5) {
-                document.getElementById("error").innerText = 'Ошибка в имени';
+        document.getElementById("order").addEventListener("click", () => {
+            const errorEl = document.getElementById("error");
+            errorEl.innerText = "";
+
+            const name = document.getElementById("user_name").value.trim();
+            const email = document.getElementById("user_email").value.trim();
+            const phone = document.getElementById("user_phone").value.trim();
+
+            if (name.length < 2) {
+                errorEl.innerText = "Введите имя";
                 return;
             }
-            if(email.length < 5 ) {
-                document.getElementById("error").innerText = 'Ошибка в email';
+            if (email.length < 5 || !email.includes("@")) {
+                errorEl.innerText = "Введите корректный email";
                 return;
             }
-            if(phone.length < 5 ) {
-                document.getElementById("error").innerText = 'Ошибка в номере телефона';
+            if (phone.length < 5) {
+                errorEl.innerText = "Введите телефон";
                 return;
             }
 
-            let data = {
-                name: name,
-                email: email,
-                phone: phone
-            }
-            tg.sendData(JSON.stringify(data));
-            
+            // Всё хорошо — отправляем данные
+            tg.sendData(JSON.stringify({ name, email, phone }));
             tg.close();
         });
     </script>
-
 </body>
 </html>
